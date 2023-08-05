@@ -28,7 +28,7 @@ __all__ = ["OSFormer"]
 class OSFormer(nn.Module):
     def __init__(self, cfg):
         super().__init__()
-
+        # print(cfg)
         self.device = torch.device(cfg.MODEL.DEVICE)
 
         self.scale_ranges = cfg.MODEL.OSFormer.FEAT_SCALE_RANGES
@@ -111,7 +111,7 @@ class OSFormer(nn.Module):
             losses (dict[str: Tensor]): mapping from a named loss to a tensor
                 storing the loss. Used during training only.
         """
-
+        print(batched_inputs)
         images = self.preprocess_image(batched_inputs)
         if "instances" in batched_inputs[0]:
             gt_instances = [x["instances"].to(self.device) for x in
@@ -127,20 +127,26 @@ class OSFormer(nn.Module):
         features = self.backbone(images.tensor)
         if self.no_fpn:
             res_feats = ["res2", "res3", "res4", "res5"]
+            # Features now contain C2-C5
             features = {f: fn(features[f]) for f, fn in zip(res_feats, self.res_modules)}
 
+        # Backbone features to LST (C3-C5)
         ins_features = [features[f] for f in self.instance_in_features]
 
         if len(self.instance_strides) > 3:
             ins_features = self.split_feats(ins_features)
-
+        
+        # Output from LST: Location label (FC), Instance-aware params (MLP), T3-T5
         cate_pred, kernel_pred, mask_extra_feat = self.cate_head(ins_features)
+        # features: C2, T3-T5
         features.update({f_name.replace('res', 'trans'): feat
                          for f_name, feat in zip(self.instance_in_features, mask_extra_feat)})
         if features.get('trans2') is not None:
             features['trans2'] = F.interpolate(features['trans2'], scale_factor=2)
 
+        # Features to CFF module (C2, T3-T5)
         mask_in_feats = [features[f] for f in self.mask_in_features]
+        # mask_pred: Output from CFF
         mask_pred = self.mask_head(mask_in_feats)
 
         sem_pred = None
@@ -379,7 +385,7 @@ class OSFormer(nn.Module):
                 loss_ins_edge.append(dice_loss(input_edge, target_edge))
 
         loss_ins_mean = torch.cat(loss_ins).mean()
-        loss_ins = loss_ins_mean * self.ins_loss_weight
+        loss_ins = loss_ins_mean * self.ins_loss_weight # Mask loss, weight=3
         loss_ins_edge = torch.cat(loss_ins_edge).mean() * self.ins_edge_weight if self.ins_edge_on else []
 
         # cate
@@ -401,7 +407,7 @@ class OSFormer(nn.Module):
 
         flatten_cate_labels_oh = torch.zeros_like(flatten_cate_preds)
         flatten_cate_labels_oh[pos_inds, flatten_cate_labels[pos_inds]] = 1
-
+        # Location loss, weight=1
         loss_cate = self.focal_loss_weight * sigmoid_focal_loss_jit(flatten_cate_preds, flatten_cate_labels_oh,
                                                                     gamma=self.focal_loss_gamma,
                                                                     alpha=self.focal_loss_alpha,
@@ -683,11 +689,13 @@ class CISTransformerHead(nn.Module):
 
         split_list = [w * h for (w, h) in sizes_encoder]
         trans_memory = []
-        memorys, level_start_index = self.trans_encoder(features, pos_encoder)
+        memorys, level_start_index = self.trans_encoder(features, pos_encoder) # memorys is X_e
 
         pos_grid = []
         sizes_decoder = []
         srcs_decoder = []
+        
+        # Restore T3-T5
         for memory, (w, h), seg_num_grid in zip(memorys.split(split_list, 1), sizes_encoder, self.num_grids):
             memory = memory.view((bs, w, h, -1)).permute(0, 3, 1, 2)
             trans_memory.append(memory)
@@ -696,6 +704,7 @@ class CISTransformerHead(nn.Module):
             pos_grid.append(self.position_encoding(feat))
             w, h = feat.shape[-2:]
             sizes_decoder.append((w, h))
+            # Location guided queries
             srcs_decoder.append(feat)
 
         cate_pred = []

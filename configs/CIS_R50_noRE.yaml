@@ -1,0 +1,4 @@
+_BASE_: "CIS_R50.yaml"
+MODEL:
+  OSFormer:
+    SEM_LOSS: False # No reversed edge supervision (REA)

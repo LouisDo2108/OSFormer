@@ -2,23 +2,23 @@ MODEL:
   META_ARCHITECTURE: "OSFormer"
   MASK_ON: True
   BACKBONE:
-    NAME: "build_resnet_backbone"
+    NAME: "build_resnet_backbone" # Change your backbone here
   RESNETS:
-    OUT_FEATURES: [ "res2", "res3", "res4", "res5" ]
+    OUT_FEATURES: [ "res2", "res3", "res4", "res5" ] # Backbone features for reuse
   BASIS_MODULE:
     NUM_CLASSES: 1
   OSFormer:
     NUM_CLASSES: 1
-    INSTANCE_IN_FEATURES: [ "res3", "res4", "res5" ]
-    MASK_IN_FEATURES: [ "res2", "trans3", "trans4", "trans5" ]
+    INSTANCE_IN_FEATURES: [ "res3", "res4", "res5" ] # LST in features
+    MASK_IN_FEATURES: [ "res2", "trans3", "trans4", "trans5" ] # CFF in features
     FEAT_INSTANCE_STRIDES: [ 8, 16, 32 ]
     FEAT_SCALE_RANGES: ((1, 192), (96, 384), (192, 2048))
     NUM_GRIDS: [ 36, 24, 16 ]
     INS_FUSION: 'camin'
     DCIN_NORM: False
-    NOFPN: True
-    SEM_LOSS: True
-    C2F_MASK: True
+    NOFPN: True # Resize backbone multi-scale features' channels to 256
+    SEM_LOSS: True # Reverse edge attention supervision, edge loss
+    C2F_MASK: True # No such settings. CFF is enabled by default.
     ENC_LAYERS: 6
     DEC_LAYERS: 3
     LOSS:
@@ -34,7 +34,7 @@ SOLVER:
   WEIGHT_DECAY: 0.0001
   STEPS: (60000, 80000)
   MAX_ITER: 90000
-  IMS_PER_BATCH: 2
+  IMS_PER_BATCH: 2 # Batch size
   WARMUP_FACTOR: 0.01
   WARMUP_ITERS: 1000
 INPUT:

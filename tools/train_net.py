@@ -1,6 +1,11 @@
 import logging
 import os
+os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
+os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"   
+os.environ["CUDA_VISIBLE_DEVICES"]= "0,1"
+
 from collections import OrderedDict
+from pprint import pprint
 
 import detectron2.utils.comm as comm
 from detectron2.data import MetadataCatalog, build_detection_train_loader
@@ -24,6 +29,10 @@ from adet.checkpoint import AdetCheckpointer
 from adet.evaluation import TextEvaluator
 from adet.data.datasets.cis import register_dataset
 
+# To train with 2 gpus
+# In /home/dtpthao/miniconda3/envs/osformer/lib/python3.8/site-packages/detectron2/engine/defaults.py
+# Find this line in the "DefaultTrainer" class:
+# model = create_ddp_model(model, broadcast_buffers=False, ***add this: "find_unused_parameters=True"***)
 
 class Trainer(DefaultTrainer):
     """
@@ -141,6 +150,8 @@ def setup(args):
     cfg = get_cfg()
     cfg.merge_from_file(args.config_file)
     cfg.merge_from_list(args.opts)
+    # pprint(cfg)
+    # print(type(cfg))
     cfg.freeze()
     default_setup(cfg, args)
 

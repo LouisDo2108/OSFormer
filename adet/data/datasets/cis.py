@@ -2,15 +2,26 @@ import os
 from detectron2.data.datasets.coco import load_coco_json
 from detectron2.data import MetadataCatalog, DatasetCatalog
 
-DATASET_ROOT = 'COD10K-v3'
-ANN_ROOT = os.path.join(DATASET_ROOT, 'annotations')
+# DATASET_ROOT = 'COD10K-v3'
+# ANN_ROOT = os.path.join(DATASET_ROOT, 'annotations')
+# TRAIN_PATH = os.path.join(DATASET_ROOT, 'Train/Image')
+# TEST_PATH = os.path.join(DATASET_ROOT, 'Test/Image')
+# TRAIN_JSON = os.path.join(ANN_ROOT, 'train_instance.json')
+# TEST_JSON = os.path.join(ANN_ROOT, 'test2026.json')
+
+# NC4K_ROOT = 'NC4K'
+# NC4K_PATH = os.path.join(NC4K_ROOT, 'Imgs')
+# NC4K_JSON = os.path.join(NC4K_ROOT, 'nc4k_test.json')
+
+DATASET_ROOT = '/home/dtpthao/workspace/datasets/COD10K-v3'
+# ANN_ROOT = os.path.join(DATASET_ROOT, 'annotations')
 TRAIN_PATH = os.path.join(DATASET_ROOT, 'Train/Image')
 TEST_PATH = os.path.join(DATASET_ROOT, 'Test/Image')
-TRAIN_JSON = os.path.join(ANN_ROOT, 'train_instance.json')
-TEST_JSON = os.path.join(ANN_ROOT, 'test2026.json')
+TRAIN_JSON = os.path.join(DATASET_ROOT, 'Train/CAM_Instance_Train.json')
+TEST_JSON = os.path.join(DATASET_ROOT, 'Test/CAM_Instance_Test.json')
 
-NC4K_ROOT = 'NC4K'
-NC4K_PATH = os.path.join(NC4K_ROOT, 'Imgs')
+NC4K_ROOT = '/home/dtpthao/workspace/datasets/NC4K'
+NC4K_PATH = os.path.join(NC4K_ROOT, 'test/image')
 NC4K_JSON = os.path.join(NC4K_ROOT, 'nc4k_test.json')
 
 CLASS_NAMES = ["foreground"]
